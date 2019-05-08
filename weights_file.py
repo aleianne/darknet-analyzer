@@ -7,8 +7,10 @@ import numpy as np
 from utils.util_functions import generate_filename
 from utils.constants import CONVOLUTION, CONNECTED, DROPOUT, MAXPOOL
 from batch_param_loader import BatchParamLoader
-from network_params import NetworkParams, NetworkLayerConvParams, NetworkLayerFcParams, NetworkDropoutLayer, NetworkMaxPoolLayer
+from network_params import NetworkParams, NetworkLayerConvParams, \
+    NetworkLayerFcParams, NetworkDropoutLayer, NetworkMaxPoolLayer
 from pathlib import Path
+
 
 class LoadDarknetWeightsFile:
     """
@@ -231,8 +233,8 @@ class AnalyzeDarknetWeights:
 
         self.filename = Path(filename)
 
-        # load the networks param from the file
-        print("Begin to load the parameters from the {filename} file...".format(filename=self.filename.name))
+        # load the network params from the file
+        print("Begin to load the parameters from {filename} file...".format(filename=self.filename.name))
         start = time.time()
 
         weights_loader = LoadDarknetWeightsFile(filename, cfg_data)
@@ -243,8 +245,8 @@ class AnalyzeDarknetWeights:
 
         self.g_weights_acc = 0          # weight accumulator variable used to store the sum of all the weight
         self.g_biases_acc = 0           # biases accumulator variable used to store the sum of all the biases
-        self.g_weights_num = 0
-        self.g_biases_num = 0
+        self.g_weights_num = 0          # variable that store the number of weights
+        self.g_biases_num = 0           # variable that store the number of biases
 
         self.w_min = 0
         self.w_max = 0
@@ -255,6 +257,7 @@ class AnalyzeDarknetWeights:
 
     def analyze_weights(self):
 
+        # before to start a new analysis clean all the instance variable
         self.g_weights_acc = 0
         self.g_biases_acc = 0
         self.g_biases_num = 0
@@ -269,20 +272,26 @@ class AnalyzeDarknetWeights:
 
         print("\nBegin the weights analysis...")
         start = time.time()
+
         self.analyze_layers()
+
         interval = round(time.time() - start, 2)
-        print("analysis analysis completed in {sec} seconds!".format(sec=interval))
+        print("analysis completed in {sec} seconds!".format(sec=interval))
 
     def analyze_layers(self):
 
         # create the data average namedtuple
-        DataAverage = collections.namedtuple("DataAverage", ["biases_avg", "weights_avg", "b_min", "b_max", "w_min", "w_max"])
+        DataAverage = collections.namedtuple("DataAverage", ["layer_n", "layer_name", "biases_avg", "weights_avg", "b_min", "b_max", "w_min", "w_max"])
 
         layers = self.network_params.get_layers()
         for layer in layers:
-            if layer.get_layer_type() == CONVOLUTION or layer.get_layer_type() == CONNECTED:
+
+            n = layer.get_layer_n()
+            l_type = layer.get_layer_type()
+
+            if l_type == CONVOLUTION or l_type == CONNECTED:
                 biases_avg, weights_avg, b_min_value, b_max_value, w_min_value, w_max_value = self.analyze_single_layer(layer)
-                d = DataAverage(biases_avg, weights_avg, b_min_value, b_max_value, w_min_value, w_min_value)
+                d = DataAverage(n, l_type, biases_avg, weights_avg, b_min_value, b_max_value, w_min_value, w_max_value)
                 self.layer_avg_list.append(d)
 
         self._compute_global_max_min()
@@ -295,12 +304,12 @@ class AnalyzeDarknetWeights:
         layer_w_acc = 0
 
         for bias in biases:
-            layer_b_acc += bias
-            self.g_biases_acc += bias
+            layer_b_acc += abs(bias)
+            self.g_biases_acc += abs(bias)
 
         for weight in weights:
-            layer_w_acc += weight
-            self.g_weights_acc += weight
+            layer_w_acc += abs(weight)
+            self.g_weights_acc += abs(weight)
 
         self.g_biases_num += biases.size
         self.g_weights_num += weights.size
@@ -314,14 +323,23 @@ class AnalyzeDarknetWeights:
 
         return layer_b_avg, layer_w_avg, layer_b_min_value, layer_b_max_value, layer_w_min_value, layer_w_max_value
 
-    def print_values(self):
+    def print_analysis_results(self):
+        i = 1
         print("\n--- {filename} analysis results:".format(filename=self.filename.name))
         print("the total number of weights into the architecture is", self.g_weights_num)
         print("the total number of biases into the architecture is", self.g_biases_num)
         print("the value of weights are between {min} and {max}".format(min=self.w_min, max=self.w_max))
         print("the average between all the weights is", self.g_weights_acc / self.g_weights_num)
         print("the value of biases are between {min} and {max}".format(min=self.b_min, max=self.b_max))
-        print("the average between all the weighs is", self.g_biases_acc / self.g_biases_num)
+        print("the average between all the biases is", self.g_biases_acc / self.g_biases_num)
+        print("\n-- single layer analysis")
+        for param in self.layer_avg_list:
+            print("Layer {n} data:".format(n=i))
+            print("the value of weights are between {min} and {max}".format(min=param.w_min, max=param.w_max))
+            print("the average between all the weights is", param.weights_avg)
+            print("the value of biases are between {min} and {max}".format(min=param.b_min, max=param.b_max))
+            print("the average between all the biases is", param.biases_avg)
+            i += 1
 
     def _compute_global_max_min(self):
 

@@ -30,7 +30,7 @@ def analyze_weights(args_params):
         # load the weights file
         weights_analyzer = AnalyzeDarknetWeights(weights_file_filename, cfg)
         weights_analyzer.analyze_weights()
-        weights_analyzer.print_values()
+        weights_analyzer.print_analysis_results()
 
     except EnvironmentError as e:
         print("\nException traceback:")
