@@ -1,13 +1,9 @@
-import time
+from struct import error
+from traceback import print_exc
 
 from cfg_file_handler import load_configuration_file
-from weights_file import AnalyzeDarknetWeights
 from utils.exceptions import ObjectTypeException
-from utils.constants import CONVOLUTION
-from network_params import NetworkParams
-from traceback import print_exc
-from struct import error
-
+from weights_file import AnalyzeDarknetWeights
 
 
 def debug_configuration_file_object(cfg):
@@ -29,8 +25,9 @@ def analyze_weights(args_params):
 
         # load the weights file
         weights_analyzer = AnalyzeDarknetWeights(weights_file_filename, cfg)
-        weights_analyzer.analyze_weights()
-        weights_analyzer.print_analysis_results()
+        # weights_analyzer.analyze_weights()
+        # weights_analyzer.print_analysis_results()
+        weights_analyzer.plot_weight_hist()
 
     except EnvironmentError as e:
         print("\nException traceback:")

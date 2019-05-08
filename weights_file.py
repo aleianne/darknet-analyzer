@@ -1,15 +1,16 @@
-import struct
 import collections
+import struct
 import time
+from pathlib import Path
 
 import numpy as np
 
-from utils.util_functions import generate_filename
-from utils.constants import CONVOLUTION, CONNECTED, DROPOUT, MAXPOOL
 from batch_param_loader import BatchParamLoader
+from matplot_histograms import create_pyplot_histogram
 from network_params import NetworkParams, NetworkLayerConvParams, \
-    NetworkLayerFcParams, NetworkDropoutLayer, NetworkMaxPoolLayer
-from pathlib import Path
+    NetworkLayerFcParams, NetworkMaxPoolLayer
+from utils.constants import CONVOLUTION, CONNECTED, DROPOUT, MAXPOOL
+from utils.util_functions import generate_filename
 
 
 class LoadDarknetWeightsFile:
@@ -126,7 +127,8 @@ class LoadDarknetWeightsFile:
             # load the batch normalization params
             batch_param_loader.load_params()
 
-        conv_layer_params = NetworkLayerConvParams(layer_n, size, pad, filters, stride, input_channels, input_width, input_height)
+        conv_layer_params = NetworkLayerConvParams(layer_n, size, pad, filters, stride, input_channels, input_width,
+                                                   input_height)
 
         conv_layer_params.read_weights_file(file)
         # conv_layer_params.debug()
@@ -243,10 +245,10 @@ class AnalyzeDarknetWeights:
         interval = round(time.time() - start, 2)
         print("parameters read correctly in {sec} seconds!".format(sec=interval))
 
-        self.g_weights_acc = 0          # weight accumulator variable used to store the sum of all the weight
-        self.g_biases_acc = 0           # biases accumulator variable used to store the sum of all the biases
-        self.g_weights_num = 0          # variable that store the number of weights
-        self.g_biases_num = 0           # variable that store the number of biases
+        self.g_weights_acc = 0  # weight accumulator variable used to store the sum of all the weight
+        self.g_biases_acc = 0  # biases accumulator variable used to store the sum of all the biases
+        self.g_weights_num = 0  # variable that store the number of weights
+        self.g_biases_num = 0  # variable that store the number of biases
 
         self.w_min = 0
         self.w_max = 0
@@ -254,6 +256,20 @@ class AnalyzeDarknetWeights:
         self.b_max = 0
 
         self.layer_avg_list = []
+
+    def plot_weight_hist(self):
+
+        total_weights = np.array([])
+
+        for layer in self.network_params.get_layers():
+            l_type = layer.get_layer_type()
+            if l_type == CONVOLUTION or l_type == CONNECTED:
+                total_weights = np.append(total_weights, layer.get_weights())
+
+        print("total number of weights stored into the system {n}".format(n=total_weights.size))
+        print("begin to plot the weights histogram")
+
+        create_pyplot_histogram(total_weights, "weight distribution", "frequency")
 
     def analyze_weights(self):
 
@@ -281,7 +297,9 @@ class AnalyzeDarknetWeights:
     def analyze_layers(self):
 
         # create the data average namedtuple
-        DataAverage = collections.namedtuple("DataAverage", ["layer_n", "layer_name", "biases_avg", "weights_avg", "b_min", "b_max", "w_min", "w_max"])
+        DataAverage = collections.namedtuple("DataAverage",
+                                             ["layer_n", "layer_name", "biases_avg", "weights_avg", "b_min", "b_max",
+                                              "w_min", "w_max"])
 
         layers = self.network_params.get_layers()
         for layer in layers:
@@ -290,7 +308,8 @@ class AnalyzeDarknetWeights:
             l_type = layer.get_layer_type()
 
             if l_type == CONVOLUTION or l_type == CONNECTED:
-                biases_avg, weights_avg, b_min_value, b_max_value, w_min_value, w_max_value = self.analyze_single_layer(layer)
+                biases_avg, weights_avg, b_min_value, b_max_value, w_min_value, w_max_value = self.analyze_single_layer(
+                    layer)
                 d = DataAverage(n, l_type, biases_avg, weights_avg, b_min_value, b_max_value, w_min_value, w_max_value)
                 self.layer_avg_list.append(d)
 
@@ -370,7 +389,8 @@ class AnalyzeDarknetWeights:
     def _debug_network_params(self, layer_n):
 
         if layer_n < 0 or layer_n >= len(self.network_params.get_layers()):
-            print("impossible to debug the layer {layer} because is less than zero or excede the list size".format(layer=layer_n))
+            print("impossible to debug the layer {layer} because is less than zero or excede the list size".format(
+                layer=layer_n))
             return
 
         layers = self.network_params.get_layers()
