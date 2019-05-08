@@ -4,6 +4,7 @@ from utils.constants import CONVOLUTION, CONNECTED, DROPOUT, MAXPOOL
 from utils.exceptions import LayerTypeException
 from utils.util_functions import decode_bytes_from_file
 
+
 class BaseNetworkLayerParams:
 
     def __init__(self, layer_type, layer_n):
