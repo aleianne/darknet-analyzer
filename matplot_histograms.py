@@ -30,4 +30,5 @@ def create_pyplot_histogram(data, hist_title, x_label):
     #     thispatch.set_facecolor(color)
 
     plt.subplots_adjust(left=0.15)
-    plt.show()
+    #plt.show()
+    plt.savefig('./images/weights_hist.png')
