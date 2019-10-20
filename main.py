@@ -41,11 +41,6 @@ def analyze_weights(args_params):
         print("\nException traceback:")
         print_exc()
         print("\nException:", e)
-    except FileNotFoundError as e:
-        print("\nException traceback:")
-        print_exc()
-        print("\nException:", e)
-
 
 
 if __name__ == "__main__":
