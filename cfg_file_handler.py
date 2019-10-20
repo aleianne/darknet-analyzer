@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from pair_object import PairObject
-from utils.util_functions import generate_filename
 from utils.exceptions import ObjectTypeException
 
 
@@ -138,12 +137,13 @@ def load_configuration_file(file):
 
     if not isinstance(file, Path):
         if isinstance(file, str):
-            file = generate_filename(file)
+            file = Path(file)
         else:
             raise ObjectTypeException(file)
 
     if not file.exists():
         print("the configuration file", file.as_posix(), "doesn't exists")
+        raise FileNotFoundError
 
     cfg_handler = None
 

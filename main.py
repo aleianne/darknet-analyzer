@@ -25,8 +25,8 @@ def analyze_weights(args_params):
 
         # load the weights file
         weights_analyzer = AnalyzeDarknetWeights(weights_file_filename, cfg)
-        # weights_analyzer.analyze_weights()
-        # weights_analyzer.print_analysis_results()
+        weights_analyzer.analyze_weights()
+        weights_analyzer.print_analysis_results()
         weights_analyzer.plot_weight_hist()
 
     except EnvironmentError as e:
@@ -41,6 +41,11 @@ def analyze_weights(args_params):
         print("\nException traceback:")
         print_exc()
         print("\nException:", e)
+    except FileNotFoundError as e:
+        print("\nException traceback:")
+        print_exc()
+        print("\nException:", e)
+
 
 
 if __name__ == "__main__":

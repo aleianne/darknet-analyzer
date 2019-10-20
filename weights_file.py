@@ -19,8 +19,8 @@ class LoadDarknetWeightsFile:
         file that contains the architecture of a specific network and and the weights of the neurons
     """
 
-    def __init__(self, filename, cfg_data):
-        self.filename = filename
+    def __init__(self, weights_filename, cfg_data):
+        self.weights_filename = weights_filename
         self.cfg_data = cfg_data
 
         self.network_params = None
@@ -33,11 +33,12 @@ class LoadDarknetWeightsFile:
 
     def load_network_params(self):
         # create the weights file path
-        weights_file_path = generate_filename(self.filename)
+        weights_file_path = self.weights_filename
 
         # only for debug
         if not weights_file_path.exists():
             print("the weights file", weights_file_path.as_posix(), "doesn't exists")
+            raise FileNotFoundError
 
         # create the network parameters
         self.network_params = NetworkParams()
@@ -231,15 +232,15 @@ class LoadDarknetWeightsFile:
 
 class AnalyzeDarknetWeights:
 
-    def __init__(self, filename, cfg_data):
+    def __init__(self, weights_filename, cfg_data):
 
-        self.filename = Path(filename)
+        self.weights_filename = Path(weights_filename)
 
-        # load the network params from the file
-        print("Begin to load the parameters from {filename} file...".format(filename=self.filename.name))
+        # load network params from file
+        print("Begin to load parameters from {filename} file...".format(filename=self.weights_filename.name))
         start = time.time()
 
-        weights_loader = LoadDarknetWeightsFile(filename, cfg_data)
+        weights_loader = LoadDarknetWeightsFile(self.weights_filename, cfg_data)
         self.network_params = weights_loader.load_network_params()
 
         interval = round(time.time() - start, 2)
@@ -308,8 +309,7 @@ class AnalyzeDarknetWeights:
             l_type = layer.get_layer_type()
 
             if l_type == CONVOLUTION or l_type == CONNECTED:
-                biases_avg, weights_avg, b_min_value, b_max_value, w_min_value, w_max_value = self.analyze_single_layer(
-                    layer)
+                biases_avg, weights_avg, b_min_value, b_max_value, w_min_value, w_max_value = self.analyze_single_layer(layer)
                 d = DataAverage(n, l_type, biases_avg, weights_avg, b_min_value, b_max_value, w_min_value, w_max_value)
                 self.layer_avg_list.append(d)
 
@@ -344,7 +344,7 @@ class AnalyzeDarknetWeights:
 
     def print_analysis_results(self):
         i = 1
-        print("\n--- {filename} analysis results:".format(filename=self.filename.name))
+        print("\n--- {filename} analysis results:".format(filename=self.weights_filename.name))
         print("the total number of weights into the architecture is", self.g_weights_num)
         print("the total number of biases into the architecture is", self.g_biases_num)
         print("the value of weights are between {min} and {max}".format(min=self.w_min, max=self.w_max))
@@ -385,30 +385,3 @@ class AnalyzeDarknetWeights:
         self.b_max = max_b
         self.w_min = min_w
         self.w_max = max_w
-
-    def _debug_network_params(self, layer_n):
-
-        if layer_n < 0 or layer_n >= len(self.network_params.get_layers()):
-            print("impossible to debug the layer {layer} because is less than zero or excede the list size".format(
-                layer=layer_n))
-            return
-
-        layers = self.network_params.get_layers()
-        layer = layers[layer_n]
-
-        if not (layer.get_layer_type() == CONVOLUTION or layer.get_layer_type() == CONNECTED):
-            print("impossible to show the weights of the {layer} layer".format(layer=layer.get_layer_type()))
-            return
-
-        biases_n = layer.get_weights().size
-        weights_n = layer.get_biases().size
-
-        print("the number of biases is {n}".format(n=biases_n))
-        print("the biases are:")
-        for bias in layer.get_biases():
-            print(bias, end=", ")
-
-        print("\n\nthe number of weights is {n}".format(n=weights_n))
-        print("the weights are:")
-        for weight in layer.get_weights():
-            print(weight, end=", ")
