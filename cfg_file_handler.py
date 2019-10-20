@@ -10,7 +10,7 @@ class CfgFileHandler:
         self.file_ptr = file_pointer
         self.cfg_object = CfgFileObject(filename)
 
-    def load_config(self):
+    def load_configuration(self):
 
         for line in self.file_ptr:
 
@@ -150,7 +150,7 @@ def load_configuration_file(file):
     with open(file, 'r') as fp:
         # create a new Cfg File Object
         cfg_handler = CfgFileHandler(fp, file.as_posix())
-        cfg_handler.load_config()
+        cfg_handler.load_configuration()
 
     configuration_file = cfg_handler.get_configuration_object()
     return configuration_file

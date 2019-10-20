@@ -232,15 +232,15 @@ class LoadDarknetWeightsFile:
 
 class AnalyzeDarknetWeights:
 
-    def __init__(self, weights_filename, cfg_data):
+    def __init__(self, weights_filename, cfg_object):
 
         self.weights_filename = Path(weights_filename)
 
         # load network params from file
-        print("Begin to load parameters from {filename} file...".format(filename=self.weights_filename.name))
+        print("Begin to load parameters from {filename}...".format(filename=self.weights_filename.name))
         start = time.time()
 
-        weights_loader = LoadDarknetWeightsFile(self.weights_filename, cfg_data)
+        weights_loader = LoadDarknetWeightsFile(self.weights_filename, cfg_object)
         self.network_params = weights_loader.load_network_params()
 
         interval = round(time.time() - start, 2)

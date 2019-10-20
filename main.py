@@ -20,11 +20,11 @@ def analyze_weights(args_params):
 
     try:
         # load the configuration data structure
-        cfg = load_configuration_file(cfg_file_filename)
+        cfg_object = load_configuration_file(cfg_file_filename)
         # debug_configuration_file_object(cfg)
 
         # load the weights file
-        weights_analyzer = AnalyzeDarknetWeights(weights_file_filename, cfg)
+        weights_analyzer = AnalyzeDarknetWeights(weights_file_filename, cfg_object)
         weights_analyzer.analyze_weights()
         weights_analyzer.print_analysis_results()
         weights_analyzer.plot_weight_hist()
